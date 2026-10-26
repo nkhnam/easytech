@@ -1,3 +1,4 @@
+import { generateAI } from '../../services/ai';
 // ChatBot.js - Tech Support for Elderly Users with Content Reporting
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -90,7 +91,6 @@ const ChatBot = () => {
   const [reportDetails, setReportDetails] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
-  const GEMINI_API_KEY = '';
 
   const scrollViewRef = useRef(null);
   const textInputRef = useRef(null);
@@ -157,15 +157,8 @@ const ChatBot = () => {
       .replace('{question}', userMessage);
 
     try {
-      const response = await axios.post(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-        { contents: [{ parts: [{ text: prompt }] }] },
-        {
-          params: { key: GEMINI_API_KEY },
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      return response.data.candidates[0].content.parts[0].text.trim();
+      const data = await generateAI(prompt);
+      return data.candidates[0].content.parts[0].text.trim();
     } catch (err) {
       console.error('Error calling Gemini:', err.response?.data || err.message);
       return 'Xin lỗi, đã có lỗi xảy ra. Bác thử hỏi lại nhé!';

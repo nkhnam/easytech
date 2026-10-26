@@ -19,6 +19,7 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import TabBar from '../TabBar';
 import { UserPreferences } from '../UserPreferences';
 import Header from '../Header';
+import { generateAI } from '../../services/ai';
 
 const TaskTutorial = () => {
   const navigation = useNavigation();
@@ -33,7 +34,6 @@ const TaskTutorial = () => {
 
   const MAX_VERIFICATION_ATTEMPTS = 3;
   const ENABLE_AI_VERIFICATION = true;
-  const GEMINI_API_KEY = 'AIzaSyD7Xqg9tpOaFZk11WSDoivTOBUmZG86gHE'; // Replace with your actual key
 
   const taskConfigurations = {
     '1': {
@@ -269,42 +269,8 @@ const TaskTutorial = () => {
   };
 
   const verifyImageWithGemini = async (base64Image) => {
-    if (!GEMINI_API_KEY) {
-      throw new Error('API key chưa được cấu hình');
-    }
-
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
     try {
-      const requestBody = {
-        contents: [
-          {
-            parts: [
-              { text: geminiPrompt },
-              {
-                inline_data: {
-                  mime_type: 'image/jpeg',
-                  data: base64Image,
-                },
-              },
-            ],
-          },
-        ],
-      };
-
-      const response = await fetch(GEMINI_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await generateAI(geminiPrompt, base64Image);
       const analysisText = data.candidates[0].content.parts[0].text;
 
       const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
@@ -330,7 +296,7 @@ const TaskTutorial = () => {
     try {
       let verification;
 
-      if (ENABLE_AI_VERIFICATION && GEMINI_API_KEY) {
+      if (ENABLE_AI_VERIFICATION) {
         const base64Image = await convertImageToBase64(imageData.uri);
         verification = await verifyImageWithGemini(base64Image);
 
